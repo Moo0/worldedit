@@ -19,6 +19,7 @@
 
 package com.sk89q.worldedit.commands;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -551,8 +552,9 @@ public class SelectionCommands {
         desc = "Get the distribution of blocks in the selection",
         help =
             "Gets the distribution of blocks in the selection.\n" +
-            "The -c flag makes it print to the console as well.",
-        flags = "c",
+            "The -c flag makes it print to the console as well.\n" +
+            "The -d flag shows data values also.",
+        flags = "cd",
         min = 0,
         max = 0
     )
@@ -560,12 +562,19 @@ public class SelectionCommands {
     public void distr(CommandContext args, LocalSession session, LocalPlayer player,
             EditSession editSession) throws WorldEditException {
         
-        List<Countable<Integer>> distribution =
-                editSession.getBlockDistribution(session.getSelection(player.getWorld()));
+        boolean useData = args.hasFlag('d'); 
+
+        List<Countable<Integer>> distribution = new ArrayList<Countable<Integer>>();
+        List<Countable<BaseBlock>> distributionData = new ArrayList<Countable<BaseBlock>>();
+        if (useData) {
+            distributionData = editSession.getBlockDistributionWithData(session.getSelection(player.getWorld()));
+        } else {
+            distribution = editSession.getBlockDistribution(session.getSelection(player.getWorld()));
+        }
 
         Logger logger = Logger.getLogger("Minecraft.WorldEdit");
 
-        if (distribution.size() > 0) { // *Should* always be true
+        if (distribution.size() > 0 || distributionData.size() > 0) { // *Should* always be true
             int size = session.getSelection(player.getWorld()).getArea();
 
             player.print("# total blocks: " + size);
@@ -575,16 +584,30 @@ public class SelectionCommands {
                 logger.info("# total blocks: " + size);
             }
 
-            for (Countable<Integer> c : distribution) {
-                BlockType block = BlockType.fromID(c.getID());
-                String str = String.format("%-7s (%.3f%%) %s #%d",
+            if (useData) {
+                for (Countable<BaseBlock> c : distributionData) {
+                    BlockType block = BlockType.fromID(c.getID().getType());
+                    String str;
+                    str = String.format("%-7s (%.3f%%) %s #%d:%d",
+                        String.valueOf(c.getAmount()),
+                        c.getAmount() / (double) size * 100,
+                        block == null ? "Unknown" : block.getName(), block.getID(), c.getID().getData());
+                    player.print(str);
+                    if (args.hasFlag('c')) {
+                        logger.info(str);
+                    }
+                }
+            } else {
+                for (Countable<Integer> c : distribution) {
+                    BlockType block = BlockType.fromID(c.getID());
+                    String str = String.format("%-7s (%.3f%%) %s #%d",
                         String.valueOf(c.getAmount()),
                         c.getAmount() / (double) size * 100,
                         block == null ? "Unknown" : block.getName(), c.getID());
-                player.print(str);
-
-                if (args.hasFlag('c')) {
-                    logger.info(str);
+                    player.print(str);
+                    if (args.hasFlag('c')) {
+                        logger.info(str);
+                    }
                 }
             }
         } else {

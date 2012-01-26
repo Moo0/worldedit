@@ -2590,8 +2590,33 @@ public class EditSession {
      * @return
      */
     public List<Countable<Integer>> getBlockDistribution(Region region) {
+        List<Countable<BaseBlock>> distributionData = getBlockDistributionWithData(region);
         List<Countable<Integer>> distribution = new ArrayList<Countable<Integer>>();
         Map<Integer, Countable<Integer>> map = new HashMap<Integer, Countable<Integer>>();
+        for (Countable<BaseBlock> c : distributionData) {
+        	int blockID = c.getID().getType();
+        	if (map.containsKey(blockID)) {
+        		int count = map.get(blockID).getAmount() + c.getAmount();
+                map.get(blockID).setAmount(count);
+            } else {
+            	Countable<Integer> cc = new Countable<Integer>(blockID, c.getAmount());
+                map.put(blockID, cc);
+                distribution.add(cc);
+            }
+        }
+        Collections.sort(distribution);
+        return distribution;
+    }
+
+    /**
+     * Get the block distribution (with data values) inside a region.
+     *
+     * @param region
+     * @return
+     */
+    public List<Countable<BaseBlock>> getBlockDistributionWithData(Region region) {
+        List<Countable<BaseBlock>> distribution = new ArrayList<Countable<BaseBlock>>();
+        Map<BaseBlock, Countable<BaseBlock>> map = new HashMap<BaseBlock, Countable<BaseBlock>>();
 
         if (region instanceof CuboidRegion) {
             // Doing this for speed
@@ -2610,13 +2635,13 @@ public class EditSession {
                     for (int z = minZ; z <= maxZ; ++z) {
                         Vector pt = new Vector(x, y, z);
 
-                        int id = getBlockType(pt);
+                        BaseBlock blk = new BaseBlock(getBlockType(pt), getBlockData(pt));
 
-                        if (map.containsKey(id)) {
-                            map.get(id).increment();
+                        if (map.containsKey(blk)) {
+                            map.get(blk).increment();
                         } else {
-                            Countable<Integer> c = new Countable<Integer>(id, 1);
-                            map.put(id, c);
+                            Countable<BaseBlock> c = new Countable<BaseBlock>(blk,1);
+                            map.put(blk, c);
                             distribution.add(c);
                         }
                     }
@@ -2624,13 +2649,13 @@ public class EditSession {
             }
         } else {
             for (Vector pt : region) {
-                int id = getBlockType(pt);
+                BaseBlock blk = new BaseBlock(getBlockType(pt), getBlockData(pt));
 
-                if (map.containsKey(id)) {
-                    map.get(id).increment();
+                if (map.containsKey(blk)) {
+                    map.get(blk).increment();
                 } else {
-                    Countable<Integer> c = new Countable<Integer>(id, 1);
-                    map.put(id, c);
+                    Countable<BaseBlock> c = new Countable<BaseBlock>(blk, 1);
+                    map.put(blk, c);
                 }
             }
         }
@@ -2640,6 +2665,7 @@ public class EditSession {
 
         return distribution;
     }
+
 
     public int makeShape(final Region region, final Vector zero, final Vector unit, final Pattern pattern, final String expressionString, final boolean hollow) throws ExpressionException, MaxChangedBlocksException {
         final Expression expression = Expression.compile(expressionString, "x", "y", "z", "type", "data");
