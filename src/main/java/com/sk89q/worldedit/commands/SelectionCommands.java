@@ -565,7 +565,7 @@ public class SelectionCommands {
         boolean useData = args.hasFlag('d'); 
 
         List<Countable<Integer>> distribution = new ArrayList<Countable<Integer>>();
-        List<Countable<BaseBlock>> distributionData = new ArrayList<Countable<BaseBlock>>();
+        List<BaseItemStack> distributionData = new ArrayList<BaseItemStack>();
         if (useData) {
             distributionData = editSession.getBlockDistributionWithData(session.getSelection(player.getWorld()));
         } else {
@@ -585,13 +585,13 @@ public class SelectionCommands {
             }
 
             if (useData) {
-                for (Countable<BaseBlock> c : distributionData) {
-                    BlockType block = BlockType.fromID(c.getID().getType());
+                for (BaseItemStack s : distributionData) {
+                    BlockType block = BlockType.fromID(s.getType());
                     String str;
                     str = String.format("%-7s (%.3f%%) %s #%d:%d",
-                        String.valueOf(c.getAmount()),
-                        c.getAmount() / (double) size * 100,
-                        block == null ? "Unknown" : block.getName(), block.getID(), c.getID().getData());
+                        String.valueOf(s.getAmount()),
+                        s.getAmount() / (double) size * 100,
+                        block == null ? "Unknown" : block.getName(), block.getID(), s.getDamage());
                     player.print(str);
                     if (args.hasFlag('c')) {
                         logger.info(str);

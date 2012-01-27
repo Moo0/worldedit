@@ -24,7 +24,7 @@ package com.sk89q.worldedit.blocks;
  *
  * @author sk89q
  */
-public class BaseItemStack extends BaseItem {
+public class BaseItemStack extends BaseItem implements Comparable<BaseItemStack> {
     /**
      * Amount of an item.
      */
@@ -74,5 +74,26 @@ public class BaseItemStack extends BaseItem {
      */
     public void setAmount(int amount) {
         this.amount = amount;
+    }
+    
+    /**
+     * @return Result of comparison
+     */
+    public int compareTo(BaseItemStack o) {
+        int id = getType();
+        short dam = getDamage();
+        int oamt = o.getAmount();
+        int oid = o.getType();
+        short odam = o.getDamage();
+        if (amount != oamt) {
+            return amount < oamt ? -1 : 1;
+        }
+        if (id != oid) {
+            return id < oid ? -1 : 1;
+        }
+        if (dam != odam) {
+            return dam < odam ? -1 : 1;
+        }
+        return 0;
     }
 }
